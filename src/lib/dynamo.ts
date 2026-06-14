@@ -6,8 +6,8 @@ const TABLE = process.env.DYNAMODB_TABLE_NAME || "querymind-sessions"
 export const dynamo = new DynamoDBClient({
   region: process.env.AWS_REGION || "us-east-1",
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
   },
 })
 
@@ -28,7 +28,7 @@ export async function getOrgHistory(orgId: string, limit = 50) {
     ScanIndexForward: false,
     Limit: limit,
   }))
-  return (result.Items || []).map(unmarshall)
+  return (result.Items || []).map(item => unmarshall(item))
 }
 
 export async function checkRateLimit(orgId: string, limit: number): Promise<{ allowed: boolean; current: number }> {
@@ -51,11 +51,11 @@ export async function checkRateLimit(orgId: string, limit: number): Promise<{ al
   }
 }
 
-export async function cacheSchema(dataSourceId: string, schema: object) {
+export async function cacheSchema(dataSourceId: string, schemaData: object) {
   const ttl = Math.floor(Date.now() / 1000) + 3600
   await dynamo.send(new PutItemCommand({
     TableName: TABLE,
-    Item: marshall({ PK: `DS#${dataSourceId}`, SK: "SCHEMA", schema: JSON.stringify(schema), ttl }),
+    Item: marshall({ PK: `DS#${dataSourceId}`, SK: "SCHEMA", schema: JSON.stringify(schemaData), ttl }),
   }))
 }
 

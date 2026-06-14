@@ -5,7 +5,6 @@ import type { SchemaCache, ChartType } from "@/types"
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-// ── Step 1: NL → SQL ─────────────────────────────────────────
 export async function generateSQL(naturalLanguage: string, schema: SchemaCache): Promise<string> {
   const schemaText = schema.tables.map(t =>
     `Table: ${t.name}\nColumns: ${t.columns.map(c => `${c.name} (${c.type})`).join(", ")}`
@@ -30,17 +29,13 @@ ${schemaText}`,
   return res.content[0].type === "text" ? res.content[0].text.trim() : "ERROR: No response"
 }
 
-// ── Step 2: Execute against demo data ────────────────────────
 export function executeDemoQuery(sql: string): Record<string, any>[] {
   const { orders, customers, monthly_revenue } = getDemoData()
   const sqlLower = sql.toLowerCase()
 
-  // Route to the right table
-  if (sqlLower.includes("monthly_revenue")) {
-    return monthly_revenue
-  }
+  if (sqlLower.includes("monthly_revenue")) return monthly_revenue
+
   if (sqlLower.includes("customers")) {
-    // Basic filter support
     if (sqlLower.includes("churn_risk = 'high'") || sqlLower.includes("churn_risk='high'")) {
       return customers.filter(c => c.churn_risk === "high")
     }
@@ -52,6 +47,7 @@ export function executeDemoQuery(sql: string): Record<string, any>[] {
     }
     return customers.slice(0, 50)
   }
+
   if (sqlLower.includes("orders")) {
     if (sqlLower.includes("group by category")) {
       const grouped: Record<string, number> = {}
@@ -75,7 +71,6 @@ export function executeDemoQuery(sql: string): Record<string, any>[] {
   return []
 }
 
-// ── Step 3: 3-Layer AI Analyst ────────────────────────────────
 export async function generateAnalysis(
   naturalLanguage: string,
   sql: string,
@@ -130,26 +125,42 @@ ${schemaText}`
   }
 }
 
-// ── Full pipeline ─────────────────────────────────────────────
-export async function runQueryPipeline(naturalLanguage: string, isDemo = true) {
-  const schema = DEMO_SCHEMA // swap for real schema introspection later
+export async function runQueryPipeline(naturalLanguage: string, isDemo = true): Promise<{
+  success: boolean
+  error?: string
+  sql: string | null
+  rows: Record<string, any>[]
+  rowCount: number
+  chartType: ChartType
+  executionMs: number
+  whatHappened: string
+  whyItHappened: string
+  whatToDo: string
+  estimatedImpact: string
+}> {
+  const schema = DEMO_SCHEMA
   const startTime = Date.now()
 
-  // Step 1: NL → SQL
   const sql = await generateSQL(naturalLanguage, schema)
   if (sql.startsWith("ERROR:")) {
-    return { success: false, error: sql.replace("ERROR: ", ""), sql: null, rows: [], executionMs: 0 }
+    return {
+      success: false,
+      error: sql.replace("ERROR: ", ""),
+      sql: null,
+      rows: [],
+      rowCount: 0,
+      chartType: "table",
+      executionMs: Date.now() - startTime,
+      whatHappened: "",
+      whyItHappened: "",
+      whatToDo: "",
+      estimatedImpact: "",
+    }
   }
 
-  // Step 2: Execute
   const rows = isDemo ? executeDemoQuery(sql) : []
-
-  // Step 3: Chart type
   const chartType: ChartType = selectChartType(rows, sql)
-
-  // Step 4: 3-layer analysis
   const analysis = await generateAnalysis(naturalLanguage, sql, rows, schema)
-
   const executionMs = Date.now() - startTime
 
   return {

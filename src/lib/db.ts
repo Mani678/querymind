@@ -3,8 +3,8 @@ import { Pool } from "pg"
 import * as schema from "./schema"
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL!,
-  ssl: { rejectUnauthorized: false },
+  connectionString: process.env.DATABASE_URL || "",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
