@@ -13,23 +13,20 @@ export async function POST(req: NextRequest) {
 
     const result = await runQueryPipeline(naturalLanguage, true)
 
-    if (!result.success) {
-      return NextResponse.json({ success: false, error: result.error }, { status: 400 })
-    }
-
     return NextResponse.json({
-      success: true,
+      success: result.success,
       queryId: uuidv4(),
       naturalLanguage,
-      generatedSQL: result.sql ?? "",
-      rows: result.rows ?? [],
-      rowCount: result.rows?.length ?? 0,
-      chartType: result.chartType ?? "table",
-      whatHappened: result.whatHappened ?? "",
-      whyItHappened: result.whyItHappened ?? "",
-      whatToDo: result.whatToDo ?? "",
-      estimatedImpact: result.estimatedImpact ?? "",
-      executionMs: result.executionMs ?? 0,
+      generatedSQL: (result as any).sql ?? "",
+      rows: (result as any).rows ?? [],
+      rowCount: (result as any).rows?.length ?? 0,
+      chartType: (result as any).chartType ?? "table",
+      whatHappened: (result as any).whatHappened ?? "",
+      whyItHappened: (result as any).whyItHappened ?? "",
+      whatToDo: (result as any).whatToDo ?? "",
+      estimatedImpact: (result as any).estimatedImpact ?? "",
+      executionMs: (result as any).executionMs ?? 0,
+      error: (result as any).error ?? null,
     })
 
   } catch (err: any) {
