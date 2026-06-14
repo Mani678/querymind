@@ -249,7 +249,7 @@ export default function QueryResult({ result }: { result: QueryResult }) {
               {result.chartType === "pie" && (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={result.rows} dataKey={cols[1]} nameKey={cols[0]} cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                    <Pie data={result.rows} dataKey={cols[1]} nameKey={cols[0]} cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
                       {result.rows.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip content={<TT />} />
