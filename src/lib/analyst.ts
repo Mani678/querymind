@@ -36,8 +36,13 @@ export function executeDemoQuery(sql: string): Record<string, any>[] {
   if (sqlLower.includes("monthly_revenue")) return monthly_revenue
 
   if (sqlLower.includes("customers")) {
-    if (sqlLower.includes("churn_risk = 'high'") || sqlLower.includes("churn_risk='high'")) {
-      return customers.filter(c => c.churn_risk === "high")
+    if (sqlLower.includes("churn") || sqlLower.includes("at risk") || sqlLower.includes("churn_risk = 'high'") || sqlLower.includes("churn_risk='high'")) {
+      return customers.filter(c => c.churn_risk === "high").map(c => ({
+        name: c.name,
+        mrr: c.mrr,
+        total_orders: c.total_orders,
+        churn_risk: c.churn_risk,
+      }))
     }
     if (sqlLower.includes("plan = 'enterprise'") || sqlLower.includes("plan='enterprise'")) {
       return customers.filter(c => c.plan === "enterprise")
