@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QueryMind — AI Business Analyst
 
-## Getting Started
+> Ask questions about your company data in plain English. Get what happened, why it happened, and exactly what to do — in seconds.
 
-First, run the development server:
+## Built for H0: Hack the Zero Stack Hackathon
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Stack
+- **Frontend:** Next.js 14 · Vercel
+- **AI:** Claude Haiku (Anthropic)
+- **Database:** Amazon Aurora DSQL + DynamoDB
+- **Auth:** Clerk
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### How it works
+1. Type a business question in plain English
+2. AI generates SQL and runs it against your database
+3. Get a 3-layer analyst response:
+   - 📊 What happened
+   - 🔍 Why it happened
+   - ⚡ What to do next
+4. Generate an action plan or executive brief in one click
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Features
+- Natural language to SQL
+- Auto chart selection
+- Business impact scoring
+- One-click action plan generator
+- Executive brief generator
+- Multi-tenant (Aurora DSQL)
+- Query history (DynamoDB)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Demo
+Live at: [querymind.vercel.app](https://querymind.vercel.app)
