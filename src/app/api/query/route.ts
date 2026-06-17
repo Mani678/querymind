@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { runQueryPipeline } from "@/lib/analyst"
+import { recordQuery } from "@/lib/dynamo"
 import { v4 as uuidv4 } from "uuid"
 
 export async function POST(req: NextRequest) {
@@ -12,10 +13,24 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await runQueryPipeline(naturalLanguage, true)
+    const queryId = uuidv4()
+
+    // Save to DynamoDB
+    try {
+      await recordQuery(
+        "demo-org",
+        "demo-user",
+        queryId,
+        naturalLanguage,
+        result.executionMs ?? 0
+      )
+    } catch (err) {
+      console.error("DynamoDB save error:", err)
+    }
 
     return NextResponse.json({
       success: result.success,
-      queryId: uuidv4(),
+      queryId,
       naturalLanguage,
       generatedSQL: (result as any).sql ?? "",
       rows: (result as any).rows ?? [],
