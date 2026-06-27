@@ -1,32 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
 export async function POST(req: NextRequest) {
   try {
     const { question, whatHappened, whyItHappened, whatToDo, estimatedImpact } = await req.json()
 
-    const res = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1000,
-      system: `You are a Chief of Staff writing a brief for a CEO or board. Write an executive summary that is:
-- Under 200 words
-- Written in confident, direct language
-- Structured as: Situation → Root Cause → Recommendation → Expected Outcome
-- No bullet points — flowing paragraphs only
-- Sounds like it came from McKinsey, not a chatbot`,
-      messages: [{
-        role: "user",
-        content: `Question: ${question}
+    const prompt = `You are a Chief of Staff writing a brief for a CEO. Write an executive summary under 200 words.
+Structure: Situation → Root Cause → Recommendation → Expected Outcome.
+No bullet points. Flowing paragraphs only. Direct and confident tone.
+
+Question: ${question}
 What happened: ${whatHappened}
 Why: ${whyItHappened}
 Recommended action: ${whatToDo}
 Estimated impact: ${estimatedImpact}`
-      }]
-    })
 
-    const brief = res.content[0].type === "text" ? res.content[0].text : ""
+    const result = await model.generateContent(prompt)
+    const brief = result.response.text().trim()
     return NextResponse.json({ brief })
   } catch (err) {
     console.error(err)

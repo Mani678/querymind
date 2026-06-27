@@ -1,32 +1,35 @@
-import Anthropic from "@anthropic-ai/sdk"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import { getDemoData, DEMO_SCHEMA } from "./demo-data"
 import { selectChartType } from "./chart-selector"
 import type { SchemaCache, ChartType } from "@/types"
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+
+async function generate(prompt: string): Promise<string> {
+  const result = await model.generateContent(prompt)
+  return result.response.text().trim()
+}
 
 export async function generateSQL(naturalLanguage: string, schema: SchemaCache): Promise<string> {
   const schemaText = schema.tables.map(t =>
     `Table: ${t.name}\nColumns: ${t.columns.map(c => `${c.name} (${c.type})`).join(", ")}`
   ).join("\n\n")
 
-  const res = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1000,
-    system: `You are a SQL expert. Generate safe read-only SELECT queries.
+  const prompt = `You are a SQL expert. Generate safe read-only SELECT queries.
 RULES:
 - Only SELECT. Never INSERT, UPDATE, DELETE, DROP, CREATE, ALTER.
 - Use exact table and column names from the schema.
 - Add LIMIT 500 unless aggregating.
-- Return ONLY the SQL. No explanation. No markdown.
+- Return ONLY the SQL. No explanation. No markdown backticks.
 - If impossible with this schema, return: ERROR: <reason>
 
 SCHEMA:
-${schemaText}`,
-    messages: [{ role: "user", content: naturalLanguage }],
-  })
+${schemaText}
 
-  return res.content[0].type === "text" ? res.content[0].text.trim() : "ERROR: No response"
+Question: ${naturalLanguage}`
+
+  return await generate(prompt)
 }
 
 export function executeDemoQuery(sql: string): Record<string, any>[] {
@@ -42,6 +45,14 @@ export function executeDemoQuery(sql: string): Record<string, any>[] {
         mrr: c.mrr,
         total_orders: c.total_orders,
         churn_risk: c.churn_risk,
+      }))
+    }
+    if (sqlLower.includes("upsell") || sqlLower.includes("upgrade") || sqlLower.includes("opportunit")) {
+      return customers.filter(c => c.churn_risk === "low" && c.plan === "free").map(c => ({
+        name: c.name,
+        mrr: c.mrr,
+        total_orders: c.total_orders,
+        plan: c.plan,
       }))
     }
     if (sqlLower.includes("plan = 'enterprise'") || sqlLower.includes("plan='enterprise'")) {
@@ -91,12 +102,9 @@ export async function generateAnalysis(
     `Table: ${t.name} — columns: ${t.columns.map(c => c.name).join(", ")}`
   ).join("\n")
 
-  const res = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1000,
-    system: `You are a senior business analyst. Given a user's question, the SQL run, and the results, provide a 3-layer analysis.
+  const prompt = `You are a senior business analyst. Given a user's question, the SQL run, and the results, provide a 3-layer analysis.
 
-Return ONLY valid JSON in this exact shape — no markdown, no extra text:
+Return ONLY valid JSON in this exact shape — no markdown, no extra text, no backticks:
 {
   "whatHappened": "1 sentence. The key factual finding with specific numbers.",
   "whyItHappened": "1-2 sentences. The most likely cause or contributing factor based on the data patterns.",
@@ -104,20 +112,16 @@ Return ONLY valid JSON in this exact shape — no markdown, no extra text:
   "estimatedImpact": "Short phrase with a number if possible. e.g. '$8K–$12K revenue recovery' or '~15% churn reduction'"
 }
 
-Be specific. Use numbers from the data. No filler phrases like "Based on the analysis...".`,
-    messages: [{
-      role: "user",
-      content: `Question: "${naturalLanguage}"
+Be specific. Use numbers from the data. No filler phrases.
+
+Question: "${naturalLanguage}"
 SQL run: ${sql}
 Results (${rows.length} rows, first 30 shown):
 ${JSON.stringify(rows.slice(0, 30), null, 2)}
-Available schema for context:
-${schemaText}`
-    }],
-  })
+Schema: ${schemaText}`
 
   try {
-    const text = res.content[0].type === "text" ? res.content[0].text.trim() : "{}"
+    const text = await generate(prompt)
     const clean = text.replace(/```json|```/g, "").trim()
     return JSON.parse(clean)
   } catch {

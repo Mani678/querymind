@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
 export async function POST(req: NextRequest) {
   try {
     const { question, whatHappened, whyItHappened, whatToDo, estimatedImpact } = await req.json()
 
-    const res = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1000,
-      system: `You are a senior business strategist. Generate a clear, numbered action plan based on a data insight.
-Format it as:
+    const prompt = `You are a senior business strategist. Generate a clear numbered action plan.
+Format exactly like this — no markdown, no backticks:
+
 IMMEDIATE (24-48 hours):
 1. [Specific action]
 2. [Specific action]
@@ -24,18 +23,14 @@ MEASURE SUCCESS BY:
 - [KPI to track]
 - [KPI to track]
 
-Be specific, actionable, and concise. No filler.`,
-      messages: [{
-        role: "user",
-        content: `Question: ${question}
+Question: ${question}
 What happened: ${whatHappened}
 Why: ${whyItHappened}
 Recommended action: ${whatToDo}
 Estimated impact: ${estimatedImpact}`
-      }]
-    })
 
-    const actionPlan = res.content[0].type === "text" ? res.content[0].text : ""
+    const result = await model.generateContent(prompt)
+    const actionPlan = result.response.text().trim()
     return NextResponse.json({ actionPlan })
   } catch (err) {
     console.error(err)
