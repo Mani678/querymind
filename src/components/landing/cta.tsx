@@ -3,7 +3,7 @@ import { Check } from "lucide-react"
 
 export default function CTA() {
   return (
-    <section style={{ padding: "80px 24px" }}>
+    <section id="pricing" style={{ padding: "80px 24px" }}>
       <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "48px", alignItems: "center" }}>
           {/* Left */}

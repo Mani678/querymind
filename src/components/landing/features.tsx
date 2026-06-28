@@ -11,7 +11,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section style={{ padding: "80px 24px", background: "oklch(0.13 0.005 0 / 0.5)" }}>
+    <section id="features" style={{ padding: "80px 24px", background: "oklch(0.13 0.005 0 / 0.5)" }}>
       <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: "64px" }}>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--foreground)", marginBottom: "16px" }}>
