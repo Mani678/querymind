@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+async function generate(prompt: string): Promise<string> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": process.env.GEMINI_API_KEY!,
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
+    }
+  )
+  const data = await res.json()
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ""
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,8 +43,7 @@ Why: ${whyItHappened}
 Recommended action: ${whatToDo}
 Estimated impact: ${estimatedImpact}`
 
-    const result = await model.generateContent(prompt)
-    const actionPlan = result.response.text()
+    const actionPlan = await generate(prompt)
     return NextResponse.json({ actionPlan })
   } catch (err) {
     console.error(err)

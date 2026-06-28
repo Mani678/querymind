@@ -1,14 +1,23 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
 import { getDemoData, DEMO_SCHEMA } from "./demo-data"
 import { selectChartType } from "./chart-selector"
 import type { SchemaCache, ChartType } from "@/types"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-
 async function generate(prompt: string): Promise<string> {
-  const result = await model.generateContent(prompt)
-  return result.response.text().trim()
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": process.env.GEMINI_API_KEY!,
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
+    }
+  )
+  const data = await res.json()
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ""
 }
 
 export async function generateSQL(naturalLanguage: string, schema: SchemaCache): Promise<string> {
