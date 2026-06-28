@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
 
 async function generate(prompt: string): Promise<string> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": process.env.GEMINI_API_KEY!,
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-      }),
-    }
-  )
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 1000,
+    }),
+  })
   const data = await res.json()
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ""
+  return data?.choices?.[0]?.message?.content?.trim() ?? ""
 }
 
 export async function POST(req: NextRequest) {
