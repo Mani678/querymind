@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { GoogleGenAI } from "@google/genai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,11 +29,8 @@ Why: ${whyItHappened}
 Recommended action: ${whatToDo}
 Estimated impact: ${estimatedImpact}`
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-latest",
-      contents: prompt,
-    })
-    const actionPlan = response.text ?? ""
+    const result = await model.generateContent(prompt)
+    const actionPlan = result.response.text()
     return NextResponse.json({ actionPlan })
   } catch (err) {
     console.error(err)

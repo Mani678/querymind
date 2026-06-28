@@ -1,16 +1,14 @@
-import { GoogleGenAI } from "@google/genai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import { getDemoData, DEMO_SCHEMA } from "./demo-data"
 import { selectChartType } from "./chart-selector"
 import type { SchemaCache, ChartType } from "@/types"
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
 async function generate(prompt: string): Promise<string> {
-  const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash-latest",
-    contents: prompt,
-  })
-  return response.text ?? ""
+  const result = await model.generateContent(prompt)
+  return result.response.text().trim()
 }
 
 export async function generateSQL(naturalLanguage: string, schema: SchemaCache): Promise<string> {
